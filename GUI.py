@@ -1,3 +1,5 @@
+from logic.predictor import get_prediction
+from logic.advice import generate_advice
 import tkinter as tk
 import numpy as np
 import joblib
@@ -5,7 +7,7 @@ import joblib
 # =========================
 # 모델 불러오기
 # =========================
-model = joblib.load("diabetes_model.pkl")  # 같은 폴더에 있어야 함
+model = joblib.load("model/diabetes_model.pkl")
 
 # =========================
 # 기능 함수들
@@ -29,21 +31,30 @@ def show_result():
         smoke = var_smoke.get()
         drink = var_drink.get()
 
-        # 모델 입력용 배열 만들기
-        user_input = np.array([[age, sex, bmi, glucose, smoke, drink]])
+        # 입력 디버깅 출력
+        print("입력 확인:")
+        print("이름:", name)
+        print("나이:", age)
+        print("성별:", sex)
+        print("BMI:", bmi)
+        print("공복혈당:", glucose)
+        print("흡연:", smoke)
+        print("음주:", drink)
 
-        # 예측 수행
-        result = model.predict(user_input)[0]
-        proba = model.predict_proba(user_input)[0][1]
+        # 예측 및 조언
+        result, proba = get_prediction(model, age, sex, bmi, glucose, smoke, drink)
+        advice = generate_advice(bmi, glucose, smoke, drink)
+
+        # 결과 디버깅 출력
+        print("모델 결과:", result, "확률:", proba)
 
         # 결과 표시
         if result == 1:
             result_label.config(text=f"⚠️ {name} 님, 당뇨 위험: {proba*100:.1f}%")
-            advice_label.config(text="주의가 필요합니다. 생활습관 개선을 권장합니다.")
         else:
             result_label.config(text=f"✅ {name} 님, 정상 범위입니다! 위험도: {proba*100:.1f}%")
-            advice_label.config(text="현재 상태는 양호합니다. 계속 유지하세요.")
 
+        advice_label.config(text=advice)
         show_frame(frame_result)
 
     except Exception as e:
@@ -54,7 +65,6 @@ def show_result():
 # =========================
 # 메인 윈도우 설정
 # =========================
-
 root = tk.Tk()
 root.title("당뇨 예측 및 관리 프로그램")
 root.geometry("800x600")
@@ -126,4 +136,3 @@ tk.Button(frame_result, text="뒤로가기", command=lambda: show_frame(frame_in
 # 메인 루프
 # =========================
 root.mainloop()
-
